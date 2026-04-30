@@ -4,17 +4,17 @@
 
 const CONFIG = {
   // 🔧 REQUIRED: Deploy your Apps Script and paste the URL here
-  SCRIPT_URL: 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec',
+  SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxLLVZf6XaTsbHgdTgXVRxTNXfF-Ryux2QDjKr8IcWfqjfFKkpEO9RLAGrCfsB-oVzu/exec',
 
   // 🔧 OPTIONAL: For direct Sheets API access (requires OAuth setup)
-  SPREADSHEET_ID: 'YOUR_SPREADSHEET_ID',
+  SPREADSHEET_ID: '1Vdpt8f5yvsB3VpvrVXUyJs7EP7UTMg13mFZLMs_ceV0',
 
   // App settings
   CLUB_NAME: 'My Sports Club',
   CLUB_LOGO: '⬡',
   CURRENCY: '$',
   TIMEZONE: 'America/New_York',
-  DEMO_MODE: true, // Set to false when connected to real Google Sheets
+  DEMO_MODE: false, // Set to false when connected to real Google Sheets
 
   // Court/facility configuration
   COURTS: [
