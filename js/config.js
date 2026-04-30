@@ -10,18 +10,16 @@ const CONFIG = {
   SPREADSHEET_ID: '1Vdpt8f5yvsB3VpvrVXUyJs7EP7UTMg13mFZLMs_ceV0',
 
   // App settings
-  CLUB_NAME: 'My Sports Club',
+  CLUB_NAME: 'T Club',
   CLUB_LOGO: '⬡',
-  CURRENCY: '$',
-  TIMEZONE: 'America/New_York',
+  CURRENCY: '₱',
+  TIMEZONE: 'Philippine Time (PHT)',
   DEMO_MODE: false, // Set to false when connected to real Google Sheets
 
   // Court/facility configuration
   COURTS: [
     { id: 'court1', name: 'Court 1', type: 'pickleball' },
     { id: 'court2', name: 'Court 2', type: 'pickleball' },
-    { id: 'court3', name: 'Court 3', type: 'tennis' },
-    { id: 'court4', name: 'Court 4', type: 'tennis' },
   ],
 
   // Membership tiers
