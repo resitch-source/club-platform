@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClubOS — Admin Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-mark">⬡</span>
+      <span class="brand-name">CLUB<span>OS</span></span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Dashboard</div>
+      <a class="nav-item active" onclick="showSection('dashboard')" href="#">
+        <span class="nav-icon">📊</span> Overview
+      </a>
+      <div class="nav-section">Management</div>
+      <a class="nav-item" onclick="showSection('members')" href="#">
+        <span class="nav-icon">👥</span> Members
+        <span class="nav-badge" id="memberBadge">—</span>
+      </a>
+      <a class="nav-item" onclick="showSection('events')" href="#">
+        <span class="nav-icon">📅</span> Events
+      </a>
+      <a class="nav-item" onclick="showSection('bookings')" href="#">
+        <span class="nav-icon">🗓️</span> Bookings
+      </a>
+      <a class="nav-item" onclick="showSection('scheduler')" href="#">
+        <span class="nav-icon">🗂️</span> Scheduler
+      </a>
+      <div class="nav-section">Finance</div>
+      <a class="nav-item" onclick="showSection('memberships')" href="#">
+        <span class="nav-icon">💳</span> Memberships
+      </a>
+      <a class="nav-item" onclick="showSection('checkins')" href="#">
+        <span class="nav-icon">✅</span> Check-ins
+      </a>
+      <div class="nav-section">Settings</div>
+      <a class="nav-item" onclick="showSection('settings')" href="#">
+        <span class="nav-icon">⚙️</span> Settings
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card" onclick="ClubAuth.logout()">
+        <div class="user-avatar" id="adminAvatar">AD</div>
+        <div class="user-info">
+          <div class="user-name" id="adminName">Admin</div>
+          <div class="user-role">Admin Panel · Logout</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <header class="top-bar">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <div class="top-bar-title" id="pageTitle">OVERVIEW</div>
+      <div class="top-bar-actions">
+        <span style="font-size:11px;font-family:var(--font-mono);color:var(--c-text3);" id="demoBadge">● DEMO MODE</span>
+        <button class="btn btn-green btn-sm" onclick="openModal('addEventModal')">+ Event</button>
+        <button class="btn btn-blue btn-sm" onclick="openModal('addMemberModal')">+ Member</button>
+      </div>
+    </header>
+
+    <div class="page-content" id="pageContent">
+      <!-- Sections rendered by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ADD EVENT MODAL -->
+<div class="modal-overlay hidden" id="addEventModal">
+  <div class="modal" style="max-width:560px">
+    <button class="modal-close" onclick="closeModal('addEventModal')">✕</button>
+    <h2>Create Event</h2>
+    <form onsubmit="handleAddEvent(event)">
+      <div class="form-group">
+        <label class="form-label">Event Title</label>
+        <input type="text" class="form-input" id="evTitle" required placeholder="Morning Open Play" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Type</label>
+          <select class="form-input" id="evType">
+            <option value="open_play">Open Play</option>
+            <option value="clinic">Clinic</option>
+            <option value="social">Social</option>
+            <option value="camp">Camp</option>
+            <option value="tournament">Tournament</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Court</label>
+          <select class="form-input" id="evCourt">
+            <option value="court1">Court 1</option>
+            <option value="court2">Court 2</option>
+            <option value="court3">Court 3</option>
+            <option value="court4">Court 4</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input type="date" class="form-input" id="evDate" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Instructor</label>
+          <input type="text" class="form-input" id="evInstructor" placeholder="Optional" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Start Time</label>
+          <input type="time" class="form-input" id="evStart" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">End Time</label>
+          <input type="time" class="form-input" id="evEnd" required />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Capacity</label>
+          <input type="number" class="form-input" id="evCapacity" value="12" min="1" max="100" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Price ($)</label>
+          <input type="number" class="form-input" id="evPrice" value="0" min="0" step="0.01" />
+        </div>
+      </div>
+      <button type="submit" class="btn-primary">Create Event</button>
+    </form>
+  </div>
+</div>
+
+<!-- ADD MEMBER MODAL -->
+<div class="modal-overlay hidden" id="addMemberModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('addMemberModal')">✕</button>
+    <h2>Add Member</h2>
+    <form onsubmit="handleAddMember(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">First Name</label>
+          <input type="text" class="form-input" id="mFirst" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Last Name</label>
+          <input type="text" class="form-input" id="mLast" required />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="mEmail" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Phone</label>
+        <input type="tel" class="form-input" id="mPhone" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Membership</label>
+        <select class="form-input" id="mMembership">
+          <option value="guest">Guest (Free)</option>
+          <option value="basic">Basic - $29/mo</option>
+          <option value="premium">Premium - $79/mo</option>
+          <option value="family">Family - $129/mo</option>
+        </select>
+      </div>
+      <button type="submit" class="btn-primary">Add Member</button>
+    </form>
+  </div>
+</div>
+
+<!-- MEMBER DETAIL MODAL -->
+<div class="modal-overlay hidden" id="memberDetailModal">
+  <div class="modal" style="max-width:560px">
+    <button class="modal-close" onclick="closeModal('memberDetailModal')">✕</button>
+    <div id="memberDetailContent"></div>
+  </div>
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  // Auth check
+  const user = ClubAuth.requireAuth(['admin']);
+  if (user) {
+    document.getElementById('adminName').textContent = user.name || 'Admin';
+    document.getElementById('adminAvatar').textContent = ClubAuth.getUserInitials(user);
+  }
+
+  // Set today's date as default for event form
+  document.getElementById('evDate').value = new Date().toISOString().split('T')[0];
+
+  let currentSection = 'dashboard';
+  let allMembers = [];
+  let allEvents = [];
+  let allBookings = [];
+  let allCheckins = [];
+
+  // ---- NAVIGATION ----
+  function showSection(section) {
+    currentSection = section;
+    document.querySelectorAll('.nav-item').forEach(el => {
+      el.classList.toggle('active', el.getAttribute('onclick').includes(`'${section}'`));
+    });
+    document.getElementById('pageTitle').textContent = section.toUpperCase();
+    closeSidebar();
+    renderSection(section);
+  }
+
+  async function renderSection(section) {
+    const el = document.getElementById('pageContent');
+    el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--c-text3);">Loading...</div>';
+
+    switch(section) {
+      case 'dashboard': await renderDashboard(); break;
+      case 'members': await renderMembers(); break;
+      case 'events': await renderEvents(); break;
+      case 'bookings': await renderBookings(); break;
+      case 'scheduler': await renderScheduler(); break;
+      case 'memberships': await renderMemberships(); break;
+      case 'checkins': await renderCheckins(); break;
+      case 'settings': renderSettings(); break;
+    }
+  }
+
+  // ---- DASHBOARD ----
+  async function renderDashboard() {
+    const [statsRes, eventsRes, checkinsRes] = await Promise.all([
+      ClubAPI.getStats(), ClubAPI.getEvents(), ClubAPI.getCheckins()
+    ]);
+    const s = statsRes.data;
+    const events = eventsRes.data;
+    const checkins = checkinsRes.data;
+
+    document.getElementById('pageContent').innerHTML = `
+      <div class="stats-grid">
+        <div class="stat-card" style="--accent-color:#00e5a0">
+          <div class="stat-icon">👥</div>
+          <div class="stat-value">${s.totalMembers}</div>
+          <div class="stat-label">Total Members</div>
+          <div class="stat-trend up">↑ 12 this month</div>
+        </div>
+        <div class="stat-card" style="--accent-color:#00b8ff">
+          <div class="stat-icon">🏃</div>
+          <div class="stat-value">${s.activeToday}</div>
+          <div class="stat-label">Active Today</div>
+          <div class="stat-trend up">↑ 3 vs yesterday</div>
+        </div>
+        <div class="stat-card" style="--accent-color:#ff6b35">
+          <div class="stat-icon">💰</div>
+          <div class="stat-value">$${s.revenueMonth.toLocaleString()}</div>
+          <div class="stat-label">Revenue / Month</div>
+          <div class="stat-trend up">↑ 8% vs last month</div>
+        </div>
+        <div class="stat-card" style="--accent-color:#ffd166">
+          <div class="stat-icon">🏟️</div>
+          <div class="stat-value">${s.courtUtilization}%</div>
+          <div class="stat-label">Court Utilization</div>
+          <div class="stat-trend up">↑ 5% vs last week</div>
+        </div>
+      </div>
+
+      <div class="grid-2 mb-24">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Today's Events</span>
+            <button class="btn btn-ghost btn-sm" onclick="showSection('events')">View all</button>
+          </div>
+          ${events.filter(e => e.date === new Date().toISOString().split('T')[0]).map(e => `
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--c-border);">
+              <div style="background:var(--c-surface2);border-radius:8px;padding:8px 10px;text-align:center;min-width:52px;">
+                <div style="font-family:var(--font-mono);font-size:11px;color:var(--c-text3);">${e.startTime}</div>
+              </div>
+              <div style="flex:1;">
+                <div style="font-weight:600;font-size:14px;color:var(--c-text)">${e.title}</div>
+                <div style="font-size:12px;color:var(--c-text3)">${e.instructor || 'No instructor'} · ${e.enrolled}/${e.capacity} enrolled</div>
+              </div>
+              <span class="badge ${e.status === 'full' ? 'badge-red' : 'badge-green'}">${e.status}</span>
+            </div>
+          `).join('') || '<p style="color:var(--c-text3);font-size:13px;">No events today</p>'}
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Recent Check-ins</span>
+            <button class="btn btn-ghost btn-sm" onclick="showSection('checkins')">View all</button>
+          </div>
+          ${checkins.slice(-5).reverse().map(c => {
+            const m = (allMembers.find(m => m.id === c.memberId) || {});
+            return `
+            <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--c-border);">
+              <div class="user-avatar" style="width:28px;height:28px;font-size:10px;">${((m.firstName||'?')[0]+(m.lastName||'?')[0])}</div>
+              <div style="flex:1">
+                <div style="font-size:13px;font-weight:600;color:var(--c-text)">${m.firstName||'Member'} ${m.lastName||''}</div>
+                <div style="font-size:11px;color:var(--c-text3)">${c.type} · ${c.time}</div>
+              </div>
+            </div>`;
+          }).join('') || '<p style="color:var(--c-text3);font-size:13px;">No check-ins today</p>'}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Court Utilization Today</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;">
+          ${CONFIG.COURTS.map(c => {
+            const pct = Math.floor(Math.random() * 60 + 30);
+            return `<div style="background:var(--c-surface2);border-radius:10px;padding:14px;">
+              <div style="font-weight:600;font-size:13px;color:var(--c-text);margin-bottom:4px;">${c.name}</div>
+              <div style="font-size:11px;color:var(--c-text3);margin-bottom:8px;">${c.type}</div>
+              <div style="background:var(--c-surface3);border-radius:4px;height:6px;overflow:hidden;">
+                <div style="height:100%;width:${pct}%;background:${pct>80?'var(--c-accent3)':pct>50?'var(--c-accent)':'var(--c-accent2)'};border-radius:4px;"></div>
+              </div>
+              <div style="font-family:var(--font-mono);font-size:11px;color:var(--c-text2);margin-top:6px;">${pct}% utilized</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // ---- MEMBERS ----
+  async function renderMembers() {
+    const res = await ClubAPI.getMembers();
+    allMembers = res.data || [];
+    document.getElementById('memberBadge').textContent = allMembers.length;
+
+    const membershipColors = { guest: 'badge-gray', basic: 'badge-blue', premium: 'badge-green', family: 'badge-orange' };
+
+    document.getElementById('pageContent').innerHTML = `
+      <div class="card mb-24">
+        <div class="card-header mb-16">
+          <span class="card-title">All Members (${allMembers.length})</span>
+          <div class="search-box" style="max-width:220px;">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="form-input" id="memberSearch" placeholder="Search members..." oninput="filterMembers(this.value)" style="padding-left:36px;" />
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table id="membersTable">
+            <thead><tr>
+              <th>Member</th><th>Email</th><th>Membership</th>
+              <th>Status</th><th>Bookings</th><th>Joined</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="membersBody">
+              ${allMembers.map(m => `
+                <tr>
+                  <td><div style="display:flex;align-items:center;gap:8px;">
+                    <div class="user-avatar" style="width:28px;height:28px;font-size:10px;">${m.firstName[0]}${m.lastName[0]}</div>
+                    <span style="color:var(--c-text);font-weight:500;">${m.firstName} ${m.lastName}</span>
+                  </div></td>
+                  <td>${m.email}</td>
+                  <td><span class="badge ${membershipColors[m.membership]}">${m.membership}</span></td>
+                  <td><span class="badge ${m.status==='active'?'badge-green':'badge-red'}">${m.status}</span></td>
+                  <td style="font-family:var(--font-mono)">${m.bookings}</td>
+                  <td style="font-family:var(--font-mono);font-size:12px;">${m.joined}</td>
+                  <td><button class="btn btn-ghost btn-sm" onclick="viewMember('${m.id}')">View</button></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  function filterMembers(query) {
+    const rows = document.querySelectorAll('#membersBody tr');
+    rows.forEach(row => {
+      row.style.display = row.textContent.toLowerCase().includes(query.toLowerCase()) ? '' : 'none';
+    });
+  }
+
+  async function viewMember(id) {
+    const res = await ClubAPI.getMember(id);
+    const m = res.data;
+    if (!m) return;
+    document.getElementById('memberDetailContent').innerHTML = `
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+        <div class="user-avatar" style="width:48px;height:48px;font-size:16px;">${m.firstName[0]}${m.lastName[0]}</div>
+        <div>
+          <h2 style="margin-bottom:0">${m.firstName} ${m.lastName}</h2>
+          <div style="color:var(--c-text3);font-size:13px;">${m.email} · ${m.phone}</div>
+        </div>
+        <span class="badge ${m.membership==='premium'?'badge-green':m.membership==='basic'?'badge-blue':'badge-gray'}" style="margin-left:auto;">${m.membership}</span>
+      </div>
+      <div class="grid-2 mb-16">
+        <div style="background:var(--c-surface2);border-radius:10px;padding:14px;">
+          <div style="font-size:11px;color:var(--c-text3);font-family:var(--font-mono);margin-bottom:4px;">TOTAL BOOKINGS</div>
+          <div style="font-family:var(--font-display);font-size:28px;">${m.bookings}</div>
+        </div>
+        <div style="background:var(--c-surface2);border-radius:10px;padding:14px;">
+          <div style="font-size:11px;color:var(--c-text3);font-family:var(--font-mono);margin-bottom:4px;">BALANCE DUE</div>
+          <div style="font-family:var(--font-display);font-size:28px;color:${m.balance>0?'var(--c-danger)':'var(--c-accent)'};">$${m.balance}</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select class="form-input" id="mStatusSelect">
+          <option value="active" ${m.status==='active'?'selected':''}>Active</option>
+          <option value="suspended" ${m.status==='suspended'?'selected':''}>Suspended</option>
+          <option value="cancelled" ${m.status==='cancelled'?'selected':''}>Cancelled</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Membership</label>
+        <select class="form-input" id="mMembershipSelect">
+          <option value="guest" ${m.membership==='guest'?'selected':''}>Guest</option>
+          <option value="basic" ${m.membership==='basic'?'selected':''}>Basic</option>
+          <option value="premium" ${m.membership==='premium'?'selected':''}>Premium</option>
+          <option value="family" ${m.membership==='family'?'selected':''}>Family</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <button class="btn btn-green" style="flex:1" onclick="saveMember('${m.id}')">Save Changes</button>
+        <button class="btn btn-ghost" style="flex:1" onclick="closeModal('memberDetailModal')">Close</button>
+      </div>
+    `;
+    openModal('memberDetailModal');
+  }
+
+  async function saveMember(id) {
+    await ClubAPI.updateMember({ id, status: document.getElementById('mStatusSelect').value, membership: document.getElementById('mMembershipSelect').value });
+    closeModal('memberDetailModal');
+    renderMembers();
+  }
+
+  // ---- EVENTS ----
+  async function renderEvents() {
+    const res = await ClubAPI.getEvents();
+    allEvents = res.data || [];
+    const typeColors = { open_play:'badge-green', clinic:'badge-blue', social:'badge-yellow', camp:'badge-orange', tournament:'badge-red' };
+
+    document.getElementById('pageContent').innerHTML = `
+      <div class="card">
+        <div class="card-header mb-16">
+          <span class="card-title">Events (${allEvents.length})</span>
+          <button class="btn btn-green btn-sm" onclick="openModal('addEventModal')">+ New Event</button>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr>
+              <th>Event</th><th>Type</th><th>Date</th><th>Time</th>
+              <th>Court</th><th>Enrolled</th><th>Price</th><th>Status</th><th>Actions</th>
+            </tr></thead>
+            <tbody>
+              ${allEvents.map(e => `
+                <tr>
+                  <td><div style="font-weight:600;color:var(--c-text)">${e.title}</div>${e.instructor?`<div style="font-size:11px;color:var(--c-text3)">${e.instructor}</div>`:''}</td>
+                  <td><span class="badge ${typeColors[e.type]||'badge-gray'}">${e.type.replace('_',' ')}</span></td>
+                  <td style="font-family:var(--font-mono);font-size:12px;">${e.date}</td>
+                  <td style="font-family:var(--font-mono);font-size:12px;">${e.startTime}–${e.endTime}</td>
+                  <td style="font-size:12px;">${e.court}</td>
+                  <td>
+                    <div style="font-family:var(--font-mono);font-size:12px;">${e.enrolled}/${e.capacity}</div>
+                    <div style="background:var(--c-surface3);border-radius:2px;height:4px;margin-top:4px;overflow:hidden;">
+                      <div style="height:100%;width:${Math.round(e.enrolled/e.capacity*100)}%;background:${e.enrolled>=e.capacity?'var(--c-danger)':'var(--c-accent)'};border-radius:2px;"></div>
+                    </div>
+                  </td>
+                  <td style="font-family:var(--font-mono);">$${e.price}</td>
+                  <td><span class="badge ${e.status==='active'?'badge-green':e.status==='full'?'badge-red':'badge-gray'}">${e.status}</span></td>
+                  <td style="display:flex;gap:4px;">
+                    <button class="btn btn-ghost btn-sm" onclick="deleteEvent('${e.id}')">Delete</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  async function deleteEvent(id) {
+    if (confirm('Delete this event?')) {
+      await ClubAPI.deleteEvent(id);
+      renderEvents();
+    }
+  }
+
+  async function handleAddEvent(e) {
+    e.preventDefault();
+    await ClubAPI.createEvent({
+      title: document.getElementById('evTitle').value,
+      type: document.getElementById('evType').value,
+      date: document.getElementById('evDate').value,
+      startTime: document.getElementById('evStart').value,
+      endTime: document.getElementById('evEnd').value,
+      court: document.getElementById('evCourt').value,
+      instructor: document.getElementById('evInstructor').value,
+      capacity: +document.getElementById('evCapacity').value,
+      price: +document.getElementById('evPrice').value,
+    });
+    closeModal('addEventModal');
+    if (currentSection === 'events') renderEvents();
+  }
+
+  async function handleAddMember(e) {
+    e.preventDefault();
+    await ClubAPI.register({
+      firstName: document.getElementById('mFirst').value,
+      lastName: document.getElementById('mLast').value,
+      email: document.getElementById('mEmail').value,
+      phone: document.getElementById('mPhone').value,
+      membership: document.getElementById('mMembership').value,
+    });
+    closeModal('addMemberModal');
+    if (currentSection === 'members') renderMembers();
+  }
+
+  // ---- SCHEDULER ----
+  async function renderScheduler() {
+    const [evRes, bkRes] = await Promise.all([ClubAPI.getEvents(), ClubAPI.getBookings()]);
+    const events = evRes.data || [];
+    const today = new Date();
+
+    // Build week view
+    const days = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      days.push(d);
+    }
+
+    const hours = [];
+    for (let h = CONFIG.OPEN_HOUR; h < CONFIG.CLOSE_HOUR; h++) {
+      hours.push(h);
+    }
+
+    const tabs = ['Expanded', 'Consolidated', 'Court View'];
+
+    document.getElementById('pageContent').innerHTML = `
+      <div class="tabs mb-24">
+        ${tabs.map((t,i) => `<div class="tab ${i===0?'active':''}" onclick="switchSchedulerTab(this,'${t}')">${t}</div>`).join('')}
+      </div>
+      <div id="schedulerContent">
+        <div class="card" style="overflow:auto;">
+          <div style="display:grid;grid-template-columns:60px repeat(7,1fr);gap:1px;background:var(--c-border);border-radius:10px;overflow:hidden;min-width:600px;">
+            <div style="background:var(--c-surface2);padding:10px;"></div>
+            ${days.map(d => `
+              <div style="background:var(--c-surface2);padding:10px;text-align:center;">
+                <div style="font-size:10px;font-family:var(--font-mono);color:var(--c-text3);text-transform:uppercase;">${d.toLocaleDateString('en',{weekday:'short'})}</div>
+                <div style="font-family:var(--font-display);font-size:20px;color:${d.toDateString()===today.toDateString()?'var(--c-accent)':'var(--c-text)'};">${d.getDate()}</div>
+              </div>
+            `).join('')}
+            ${hours.map(h => `
+              <div style="background:var(--c-surface);padding:8px 6px;display:flex;align-items:flex-start;border-bottom:1px solid var(--c-border);">
+                <span style="font-size:10px;font-family:var(--font-mono);color:var(--c-text3);">${h}:00</span>
+              </div>
+              ${days.map(d => {
+                const dateStr = d.toISOString().split('T')[0];
+                const ev = events.find(e => e.date === dateStr && parseInt(e.startTime) === h);
+                return `<div style="background:var(--c-surface);padding:4px;border-bottom:1px solid var(--c-border);border-left:1px solid var(--c-border);min-height:40px;">
+                  ${ev ? `<div style="background:rgba(0,229,160,0.15);border-left:2px solid var(--c-accent);padding:3px 5px;border-radius:3px;font-size:10px;color:var(--c-accent);font-weight:600;">${ev.title}</div>` : ''}
+                </div>`;
+              }).join('')}
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function switchSchedulerTab(el, tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // ---- MEMBERSHIPS ----
+  async function renderMemberships() {
+    document.getElementById('pageContent').innerHTML = `
+      <div class="grid-2 mb-24">
+        ${CONFIG.MEMBERSHIPS.map(m => `
+          <div class="stat-card" style="--accent-color:${m.color}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+              <div>
+                <div style="font-family:var(--font-display);font-size:22px;letter-spacing:1px;">${m.name}</div>
+                <div style="font-family:var(--font-mono);font-size:11px;color:var(--c-text3);">MEMBERSHIP TIER</div>
+              </div>
+              <div style="font-family:var(--font-display);font-size:32px;color:${m.color};">$${m.price}<span style="font-size:14px;color:var(--c-text3);">/mo</span></div>
+            </div>
+            <ul style="list-style:none;display:flex;flex-direction:column;gap:6px;">
+              ${m.perks.map(p => `<li style="font-size:13px;color:var(--c-text2);display:flex;gap:6px;"><span style="color:${m.color}">✓</span>${p}</li>`).join('')}
+            </ul>
+          </div>
+        `).join('')}
+      </div>
+      <div class="card">
+        <div class="card-header mb-16">
+          <span class="card-title">Membership Distribution</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+          ${CONFIG.MEMBERSHIPS.map((m,i) => {
+            const counts = [3, 45, 82, 18];
+            return `<div style="text-align:center;padding:16px;background:var(--c-surface2);border-radius:10px;">
+              <div style="font-family:var(--font-display);font-size:36px;color:${m.color};">${counts[i]}</div>
+              <div style="font-size:12px;font-family:var(--font-mono);color:var(--c-text3);">${m.name.toUpperCase()}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // ---- BOOKINGS ----
+  async function renderBookings() {
+    const res = await ClubAPI.getBookings();
+    allBookings = res.data || [];
+    document.getElementById('pageContent').innerHTML = `
+      <div class="card">
+        <div class="card-header mb-16">
+          <span class="card-title">All Bookings (${allBookings.length})</span>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>ID</th><th>Type</th><th>Date</th><th>Time</th><th>Status</th><th>Price</th><th>Actions</th></tr></thead>
+            <tbody>
+              ${allBookings.map(b => `
+                <tr>
+                  <td style="font-family:var(--font-mono);font-size:11px;color:var(--c-text3);">${b.id}</td>
+                  <td><span class="badge ${b.type==='event'?'badge-blue':'badge-green'}">${b.type}</span></td>
+                  <td style="font-family:var(--font-mono);font-size:12px;">${b.date}</td>
+                  <td style="font-family:var(--font-mono);font-size:12px;">${b.startTime}–${b.endTime}</td>
+                  <td><span class="badge ${b.status==='confirmed'?'badge-green':b.status==='completed'?'badge-blue':'badge-red'}">${b.status}</span></td>
+                  <td style="font-family:var(--font-mono);">$${b.price}</td>
+                  <td><button class="btn btn-red btn-sm" onclick="cancelBooking('${b.id}')">Cancel</button></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  async function cancelBooking(id) {
+    if (confirm('Cancel this booking?')) {
+      await ClubAPI.cancelBooking(id);
+      renderBookings();
+    }
+  }
+
+  // ---- CHECK-INS ----
+  async function renderCheckins() {
+    const [ciRes, mbRes] = await Promise.all([ClubAPI.getCheckins(), ClubAPI.getMembers()]);
+    allMembers = mbRes.data || [];
+    const checkins = ciRes.data || [];
+    document.getElementById('pageContent').innerHTML = `
+      <div class="stats-grid mb-24">
+        <div class="stat-card" style="--accent-color:var(--c-accent)">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value">${checkins.length}</div>
+          <div class="stat-label">Total Check-ins Today</div>
+        </div>
+        <div class="stat-card" style="--accent-color:var(--c-accent2)">
+          <div class="stat-icon">🏃</div>
+          <div class="stat-value">${new Set(checkins.map(c=>c.memberId)).size}</div>
+          <div class="stat-label">Unique Members</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header mb-16">
+          <span class="card-title">Today's Check-ins</span>
+          <button class="btn btn-green btn-sm" onclick="openModal('manualCheckinModal')">+ Manual Check-in</button>
+        </div>
+        <div class="table-wrapper">
+          <table>
+            <thead><tr><th>Member</th><th>Time</th><th>Type</th></tr></thead>
+            <tbody>
+              ${checkins.map(c => {
+                const m = allMembers.find(m => m.id === c.memberId) || {};
+                return `<tr>
+                  <td><div style="display:flex;align-items:center;gap:8px;">
+                    <div class="user-avatar" style="width:24px;height:24px;font-size:9px;">${(m.firstName||'?')[0]}${(m.lastName||'?')[0]}</div>
+                    <span style="color:var(--c-text);font-weight:500;">${m.firstName||'Unknown'} ${m.lastName||''}</span>
+                  </div></td>
+                  <td style="font-family:var(--font-mono)">${c.time}</td>
+                  <td><span class="badge badge-green">${c.type}</span></td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  // ---- SETTINGS ----
+  function renderSettings() {
+    document.getElementById('pageContent').innerHTML = `
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header mb-16"><span class="card-title">Club Settings</span></div>
+          <div class="form-group">
+            <label class="form-label">Club Name</label>
+            <input type="text" class="form-input" value="${CONFIG.CLUB_NAME}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Timezone</label>
+            <input type="text" class="form-input" value="${CONFIG.TIMEZONE}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Opening Hour</label>
+            <input type="number" class="form-input" value="${CONFIG.OPEN_HOUR}" min="0" max="12" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Closing Hour</label>
+            <input type="number" class="form-input" value="${CONFIG.CLOSE_HOUR}" min="12" max="24" />
+          </div>
+          <button class="btn-primary" onclick="alert('Settings saved (demo)')">Save Settings</button>
+        </div>
+
+        <div class="card">
+          <div class="card-header mb-16"><span class="card-title">Google Sheets Integration</span></div>
+          <div style="background:var(--c-surface2);border-radius:10px;padding:16px;margin-bottom:16px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <span style="font-size:18px;">📊</span>
+              <span style="font-weight:600;color:var(--c-text);">Connection Status</span>
+              <span class="badge ${CONFIG.DEMO_MODE?'badge-yellow':'badge-green'}" style="margin-left:auto;">${CONFIG.DEMO_MODE?'DEMO MODE':'CONNECTED'}</span>
+            </div>
+            <p style="font-size:13px;color:var(--c-text2);">
+              ${CONFIG.DEMO_MODE ? 'Running in demo mode with sample data. Connect Google Sheets to use live data.' : 'Connected to Google Sheets.'}
+            </p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Apps Script URL</label>
+            <input type="url" class="form-input" value="${CONFIG.SCRIPT_URL}" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/..." />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Spreadsheet ID</label>
+            <input type="text" class="form-input" value="${CONFIG.SPREADSHEET_ID}" id="spreadsheetIdInput" placeholder="Your spreadsheet ID" />
+          </div>
+          <button class="btn btn-blue" style="width:100%;justify-content:center;" onclick="testConnection()">Test Connection</button>
+          <div style="margin-top:16px;padding:12px;background:var(--c-surface2);border-radius:8px;">
+            <div style="font-size:12px;font-weight:600;color:var(--c-text2);margin-bottom:6px;">📋 Setup Instructions</div>
+            <ol style="font-size:12px;color:var(--c-text3);padding-left:16px;line-height:1.8;">
+              <li>Copy the Apps Script from the README</li>
+              <li>Deploy as a Web App (Execute as: Me, Access: Anyone)</li>
+              <li>Paste the deployment URL above</li>
+              <li>Set DEMO_MODE to false in config.js</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function testConnection() {
+    const url = document.getElementById('scriptUrlInput').value;
+    if (url.includes('YOUR_SCRIPT_ID')) {
+      alert('Please enter your actual Apps Script deployment URL first.');
+    } else {
+      alert('Connection test sent! Check the console for results.');
+      fetch(url + '?action=ping').then(r => r.json()).then(d => alert('Connected! Response: ' + JSON.stringify(d))).catch(e => alert('Connection failed: ' + e.message));
+    }
+  }
+
+  // ---- HELPERS ----
+  function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+  function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('active');
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('active');
+  }
+
+  // Init
+  renderSection('dashboard');
+</script>
+</body>
+</html>

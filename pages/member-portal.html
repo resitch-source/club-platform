@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClubOS — Member Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-mark">⬡</span>
+      <span class="brand-name">CLUB<span>OS</span></span>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">My Club</div>
+      <a class="nav-item active" onclick="showSection('home')" href="#">
+        <span class="nav-icon">🏠</span> Home
+      </a>
+      <a class="nav-item" onclick="showSection('book')" href="#">
+        <span class="nav-icon">📅</span> Book a Court
+      </a>
+      <a class="nav-item" onclick="showSection('events')" href="#">
+        <span class="nav-icon">🎯</span> Events
+      </a>
+      <div class="nav-section">Account</div>
+      <a class="nav-item" onclick="showSection('bookings')" href="#">
+        <span class="nav-icon">🗓️</span> My Bookings
+      </a>
+      <a class="nav-item" onclick="showSection('membership')" href="#">
+        <span class="nav-icon">💳</span> Membership
+      </a>
+      <a class="nav-item" onclick="showSection('profile')" href="#">
+        <span class="nav-icon">👤</span> Profile
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card" onclick="ClubAuth.logout()">
+        <div class="user-avatar" id="memberAvatar">M</div>
+        <div class="user-info">
+          <div class="user-name" id="memberName">Member</div>
+          <div class="user-role">Member · Logout</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <header class="top-bar">
+      <button class="hamburger" onclick="toggleSidebar()">☰</button>
+      <div class="top-bar-title" id="pageTitle">HOME</div>
+      <div class="top-bar-actions">
+        <button class="btn btn-green btn-sm" onclick="showSection('book')">+ Book Court</button>
+      </div>
+    </header>
+    <div class="page-content" id="pageContent"></div>
+  </div>
+</div>
+
+<!-- BOOK COURT MODAL -->
+<div class="modal-overlay hidden" id="bookCourtModal">
+  <div class="modal" style="max-width:480px">
+    <button class="modal-close" onclick="closeModal('bookCourtModal')">✕</button>
+    <h2>Confirm Booking</h2>
+    <div id="bookingConfirmContent"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-green" style="flex:1" onclick="confirmBooking()">Confirm Booking</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('bookCourtModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- EVENT ENROLL MODAL -->
+<div class="modal-overlay hidden" id="enrollModal">
+  <div class="modal" style="max-width:420px">
+    <button class="modal-close" onclick="closeModal('enrollModal')">✕</button>
+    <h2>Join Event</h2>
+    <div id="enrollContent"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-blue" style="flex:1" onclick="confirmEnroll()">Register Now</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="closeModal('enrollModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  const user = ClubAuth.requireAuth(['member', 'admin']);
+  if (user) {
+    document.getElementById('memberName').textContent = user.name || user.email;
+    document.getElementById('memberAvatar').textContent = ClubAuth.getUserInitials(user);
+  }
+
+  let selectedBooking = null;
+  let selectedEvent = null;
+  let memberData = null;
+
+  function showSection(section) {
+    document.querySelectorAll('.nav-item').forEach(el => {
+      el.classList.toggle('active', el.getAttribute('onclick').includes(`'${section}'`));
+    });
+    document.getElementById('pageTitle').textContent = section.toUpperCase().replace('_', ' ');
+    closeSidebar();
+    renderSection(section);
+  }
+
+  async function renderSection(section) {
+    switch(section) {
+      case 'home': await renderHome(); break;
+      case 'book': await renderBook(); break;
+      case 'events': await renderEvents(); break;
+      case 'bookings': await renderMyBookings(); break;
+      case 'membership': await renderMembership(); break;
+      case 'profile': renderProfile(); break;
+    }
+  }
+
+  // ---- HOME ----
+  async function renderHome() {
+    const [evRes, bkRes] = await Promise.all([ClubAPI.getEvents(), ClubAPI.getBookings()]);
+    const events = evRes.data || [];
+    const bookings = bkRes.data || [];
+    const upcoming = bookings.filter(b => b.status === 'confirmed').slice(0, 3);
+
+    document.getElementById('pageContent').innerHTML = `
+      <div style="margin-bottom:24px;">
+        <h2 style="font-family:var(--font-display);font-size:28px;letter-spacing:1px;">Welcome back, <span style="color:var(--c-accent)">${(user.name||'Member').split(' ')[0]}</span> 👋</h2>
+        <p style="color:var(--c-text2);font-size:14px;">Here's what's happening at your club today.</p>
+      </div>
+
+      <div class="stats-grid mb-24">
+        <div class="stat-card" style="--accent-color:var(--c-accent)">
+          <div class="stat-icon">🗓️</div>
+          <div class="stat-value">${upcoming.length}</div>
+          <div class="stat-label">Upcoming Bookings</div>
+        </div>
+        <div class="stat-card" style="--accent-color:var(--c-accent2)">
+          <div class="stat-icon">🎯</div>
+          <div class="stat-value">${events.filter(e=>e.status!=='cancelled').length}</div>
+          <div class="stat-label">Open Events</div>
+        </div>
+        <div class="stat-card" style="--accent-color:var(--c-accent3)">
+          <div class="stat-icon">💳</div>
+          <div class="stat-value" style="text-transform:capitalize">Premium</div>
+          <div class="stat-label">Membership</div>
+        </div>
+      </div>
+
+      <div class="grid-2 mb-24">
+        <div class="card">
+          <div class="card-header mb-16">
+            <span class="card-title">My Upcoming</span>
+            <button class="btn btn-ghost btn-sm" onclick="showSection('bookings')">See all</button>
+          </div>
+          ${upcoming.length ? upcoming.map(b => `
+            <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--c-border);">
+              <div style="background:var(--c-surface2);border-radius:8px;padding:8px;text-align:center;min-width:44px;">
+                <div style="font-family:var(--font-mono);font-size:10px;color:var(--c-text3);">${b.date.slice(5)}</div>
+                <div style="font-family:var(--font-mono);font-size:11px;color:var(--c-text2);">${b.startTime}</div>
+              </div>
+              <div style="flex:1">
+                <div style="font-weight:600;font-size:13px;color:var(--c-text)">${b.type === 'court' ? 'Court ' + (b.courtId||'').replace('court','') : 'Event'}</div>
+                <div style="font-size:11px;color:var(--c-text3)">${b.startTime} – ${b.endTime}</div>
+              </div>
+              <span class="badge badge-green">confirmed</span>
+            </div>
+          `).join('') : '<p style="color:var(--c-text3);font-size:13px;">No upcoming bookings. <a href="#" onclick="showSection(\'book\')" style="color:var(--c-accent)">Book a court →</a></p>'}
+        </div>
+
+        <div class="card">
+          <div class="card-header mb-16">
+            <span class="card-title">Today's Events</span>
+            <button class="btn btn-ghost btn-sm" onclick="showSection('events')">All events</button>
+          </div>
+          ${events.filter(e => e.date === new Date().toISOString().split('T')[0]).slice(0,4).map(e => `
+            <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--c-border);cursor:pointer;" onclick="showSection('events')">
+              <div style="width:4px;height:40px;border-radius:2px;background:${e.type==='clinic'?'var(--c-accent2)':e.type==='social'?'var(--c-warn)':'var(--c-accent)'};flex-shrink:0;"></div>
+              <div style="flex:1">
+                <div style="font-size:13px;font-weight:600;color:var(--c-text)">${e.title}</div>
+                <div style="font-size:11px;color:var(--c-text3)">${e.startTime} · ${e.enrolled}/${e.capacity} spots</div>
+              </div>
+              <span class="badge ${e.status==='full'?'badge-red':'badge-green'}">${e.status}</span>
+            </div>
+          `).join('') || '<p style="color:var(--c-text3);font-size:13px;">No events today</p>'}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header mb-16">
+          <span class="card-title">Quick Book</span>
+          <span style="font-size:12px;color:var(--c-text3)">Today · Available slots</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          ${['09:00','10:00','11:00','14:00','15:00','16:00','17:00','18:00','19:00'].map(t =>
+            `<button class="slot available" onclick="quickBook('court1','${t}')">${t}</button>`
+          ).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  // ---- BOOK ----
+  async function renderBook() {
+    const today = new Date().toISOString().split('T')[0];
+    let selectedDate = today;
+    let selectedCourt = CONFIG.COURTS[0].id;
+
+    function buildTimeSlots(date, courtId) {
+      const slots = [];
+      const bookedSlots = ['10:00', '14:00', '15:00']; // demo
+      for (let h = CONFIG.OPEN_HOUR; h < CONFIG.CLOSE_HOUR; h++) {
+        const t = `${String(h).padStart(2,'0')}:00`;
+        slots.push({ time: t, booked: bookedSlots.includes(t) });
+      }
+      return slots;
+    }
+
+    document.getElementById('pageContent').innerHTML = `
+      <div class="grid-2 mb-24" style="align-items:start">
+        <div class="card">
+          <div class="card-header mb-16"><span class="card-title">Select Court & Date</span></div>
+          <div class="form-group">
+            <label class="form-label">Court</label>
+            <select class="form-input" id="courtSelect" onchange="updateSlots()">
+              ${CONFIG.COURTS.map(c => `<option value="${c.id}">${c.name} (${c.type})</option>`).join('')}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-input" id="dateSelect" value="${today}" min="${today}" onchange="updateSlots()" />
+          </div>
+          <div style="background:var(--c-surface2);border-radius:10px;padding:14px;margin-top:8px;">
+            <div style="font-size:12px;font-weight:600;color:var(--c-text2);margin-bottom:8px;">Legend</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div style="display:flex;gap:8px;align-items:center;"><div class="slot available" style="cursor:default;font-size:11px;">09:00</div><span style="font-size:12px;color:var(--c-text3)">Available</span></div>
+              <div style="display:flex;gap:8px;align-items:center;"><div class="slot booked" style="cursor:default;font-size:11px;">10:00</div><span style="font-size:12px;color:var(--c-text3)">Booked</span></div>
+              <div style="display:flex;gap:8px;align-items:center;"><div class="slot mine" style="cursor:default;font-size:11px;">14:00</div><span style="font-size:12px;color:var(--c-text3)">Your booking</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header mb-16">
+            <span class="card-title">Available Slots</span>
+            <span id="slotDateLabel" style="font-size:12px;font-family:var(--font-mono);color:var(--c-text3);">${today}</span>
+          </div>
+          <div id="slotsContainer" style="display:flex;flex-wrap:wrap;gap:8px;">
+            ${buildTimeSlots(today, selectedCourt).map(s =>
+              `<button class="slot ${s.booked ? 'booked' : 'available'}" ${s.booked?'disabled':''} onclick="selectSlot('${s.time}')">${s.time}</button>`
+            ).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+
+    window.updateSlots = function() {
+      const court = document.getElementById('courtSelect').value;
+      const date = document.getElementById('dateSelect').value;
+      document.getElementById('slotDateLabel').textContent = date;
+      const slots = buildTimeSlots(date, court);
+      document.getElementById('slotsContainer').innerHTML = slots.map(s =>
+        `<button class="slot ${s.booked ? 'booked' : 'available'}" ${s.booked?'disabled':''} onclick="selectSlot('${s.time}')">${s.time}</button>`
+      ).join('');
+    };
+  }
+
+  function selectSlot(time) {
+    const court = document.getElementById('courtSelect').value;
+    const date = document.getElementById('dateSelect').value;
+    const courtName = CONFIG.COURTS.find(c => c.id === court)?.name || court;
+    const endTime = `${String(parseInt(time)+1).padStart(2,'0')}:00`;
+
+    selectedBooking = { courtId: court, date, startTime: time, endTime, type: 'court', price: 15 };
+
+    document.getElementById('bookingConfirmContent').innerHTML = `
+      <div style="background:var(--c-surface2);border-radius:10px;padding:16px;margin-bottom:16px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><div style="font-size:11px;color:var(--c-text3);font-family:var(--font-mono);">COURT</div><div style="font-weight:600;color:var(--c-text);margin-top:2px;">${courtName}</div></div>
+          <div><div style="font-size:11px;color:var(--c-text3);font-family:var(--font-mono);">DATE</div><div style="font-weight:600;color:var(--c-text);margin-top:2px;">${date}</div></div>
+          <div><div style="font-size:11px;color:var(--c-text3);font-family:var(--font-mono);">TIME</div><div style="font-weight:600;color:var(--c-text);margin-top:2px;">${time} – ${endTime}</div></div>
+          <div><div style="font-size:11px;color:var(--c-text3);font-family:var(--font-mono);">PRICE</div><div style="font-weight:600;color:var(--c-accent);margin-top:2px;">$15.00</div></div>
+        </div>
+      </div>
+    `;
+    openModal('bookCourtModal');
+  }
+
+  async function quickBook(courtId, time) {
+    selectSlot(time);
+    // pre-set the court and time
+  }
+
+  async function confirmBooking() {
+    if (!selectedBooking) return;
+    const res = await ClubAPI.createBooking(selectedBooking);
+    closeModal('bookCourtModal');
+    if (res.success) {
+      showToast('Booking confirmed! 🎉', 'success');
+      renderBook();
+    }
+  }
+
+  // ---- EVENTS ----
+  async function renderEvents() {
+    const res = await ClubAPI.getEvents();
+    const events = res.data || [];
+    const typeColors = { open_play:'badge-green', clinic:'badge-blue', social:'badge-yellow', camp:'badge-orange', tournament:'badge-red' };
+
+    document.getElementById('pageContent').innerHTML = `
+      <div class="tabs mb-24">
+        <div class="tab active" onclick="filterEvents(this,'all')">All Events</div>
+        <div class="tab" onclick="filterEvents(this,'open_play')">Open Play</div>
+        <div class="tab" onclick="filterEvents(this,'clinic')">Clinics</div>
+        <div class="tab" onclick="filterEvents(this,'social')">Social</div>
+        <div class="tab" onclick="filterEvents(this,'camp')">Camps</div>
+      </div>
+      <div id="eventsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;">
+        ${events.map(e => `
+          <div class="card event-card" data-type="${e.type}" style="cursor:pointer;transition:all 0.2s;" onclick="openEnroll(${JSON.stringify(e).replace(/"/g,'&quot;')})">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+              <span class="badge ${typeColors[e.type]||'badge-gray'}">${e.type.replace('_',' ')}</span>
+              <span class="badge ${e.status==='full'?'badge-red':e.status==='active'?'badge-green':'badge-gray'}">${e.status}</span>
+            </div>
+            <h3 style="font-family:var(--font-display);font-size:20px;letter-spacing:0.5px;color:var(--c-text);margin-bottom:4px;">${e.title}</h3>
+            ${e.instructor ? `<div style="font-size:12px;color:var(--c-accent2);margin-bottom:10px;">👨‍🏫 ${e.instructor}</div>` : ''}
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+              <div style="background:var(--c-surface2);border-radius:6px;padding:8px;">
+                <div style="font-size:10px;color:var(--c-text3);font-family:var(--font-mono);">DATE</div>
+                <div style="font-size:12px;font-weight:600;color:var(--c-text);margin-top:1px;">${e.date}</div>
+              </div>
+              <div style="background:var(--c-surface2);border-radius:6px;padding:8px;">
+                <div style="font-size:10px;color:var(--c-text3);font-family:var(--font-mono);">TIME</div>
+                <div style="font-size:12px;font-weight:600;color:var(--c-text);margin-top:1px;">${e.startTime}</div>
+              </div>
+            </div>
+            <div style="margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--c-text3);margin-bottom:4px;">
+                <span>Spots</span><span style="font-family:var(--font-mono)">${e.enrolled}/${e.capacity}</span>
+              </div>
+              <div style="background:var(--c-surface3);border-radius:3px;height:5px;overflow:hidden;">
+                <div style="height:100%;width:${Math.round(e.enrolled/e.capacity*100)}%;background:${e.enrolled>=e.capacity?'var(--c-danger)':'var(--c-accent)'};border-radius:3px;"></div>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-family:var(--font-display);font-size:22px;color:var(--c-accent);">$${e.price}</span>
+              <button class="btn ${e.status==='full'?'btn-ghost':'btn-green'} btn-sm" ${e.status==='full'?'disabled':''}>
+                ${e.status==='full'?'Full':'Register →'}
+              </button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function filterEvents(el, type) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.event-card').forEach(c => {
+      c.style.display = (type === 'all' || c.dataset.type === type) ? '' : 'none';
+    });
+  }
+
+  function openEnroll(event) {
+    if (typeof event === 'string') event = JSON.parse(event.replace(/&quot;/g,'"'));
+    selectedEvent = event;
+    document.getElementById('enrollContent').innerHTML = `
+      <div style="background:var(--c-surface2);border-radius:10px;padding:16px;margin-bottom:12px;">
+        <h3 style="font-family:var(--font-display);font-size:22px;margin-bottom:8px;">${event.title}</h3>
+        ${event.instructor ? `<div style="font-size:13px;color:var(--c-accent2);margin-bottom:8px;">👨‍🏫 ${event.instructor}</div>` : ''}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;color:var(--c-text2);">
+          <div>📅 ${event.date}</div>
+          <div>🕐 ${event.startTime} – ${event.endTime}</div>
+          <div>📍 ${event.court}</div>
+          <div>👥 ${event.enrolled}/${event.capacity} enrolled</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--c-surface2);border-radius:8px;">
+        <span style="font-size:13px;color:var(--c-text2);">Registration fee</span>
+        <span style="font-family:var(--font-display);font-size:24px;color:var(--c-accent);">$${event.price}</span>
+      </div>
+    `;
+    openModal('enrollModal');
+  }
+
+  async function confirmEnroll() {
+    if (!selectedEvent) return;
+    await ClubAPI.enrollEvent(selectedEvent.id, 'm1');
+    closeModal('enrollModal');
+    showToast('Registered for event! 🎯', 'success');
+    renderEvents();
+  }
+
+  // ---- MY BOOKINGS ----
+  async function renderMyBookings() {
+    const res = await ClubAPI.getBookings();
+    const bookings = res.data || [];
+
+    document.getElementById('pageContent').innerHTML = `
+      <div class="tabs mb-24">
+        <div class="tab active" onclick="filterMyBookings(this,'all')">All</div>
+        <div class="tab" onclick="filterMyBookings(this,'confirmed')">Upcoming</div>
+        <div class="tab" onclick="filterMyBookings(this,'completed')">Past</div>
+        <div class="tab" onclick="filterMyBookings(this,'cancelled')">Cancelled</div>
+      </div>
+      <div id="bookingsList" style="display:flex;flex-direction:column;gap:12px;">
+        ${bookings.map(b => `
+          <div class="card booking-item" data-status="${b.status}" style="display:flex;align-items:center;gap:16px;">
+            <div style="background:var(--c-surface2);border-radius:10px;padding:12px;text-align:center;min-width:60px;">
+              <div style="font-size:10px;font-family:var(--font-mono);color:var(--c-text3);">${b.date.slice(5)}</div>
+              <div style="font-family:var(--font-display);font-size:22px;color:var(--c-text);">${b.date.slice(8)}</div>
+            </div>
+            <div style="flex:1">
+              <div style="font-weight:600;font-size:15px;color:var(--c-text);margin-bottom:2px;">
+                ${b.type === 'court' ? 'Court ' + (b.courtId||'').replace('court','') : 'Event Booking'}
+              </div>
+              <div style="font-size:12px;color:var(--c-text3);">${b.startTime} – ${b.endTime} · $${b.price}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+              <span class="badge ${b.status==='confirmed'?'badge-green':b.status==='completed'?'badge-blue':'badge-red'}">${b.status}</span>
+              ${b.status === 'confirmed' ? `<button class="btn btn-red btn-sm" onclick="cancelMyBooking('${b.id}')">Cancel</button>` : ''}
+            </div>
+          </div>
+        `).join('') || '<div class="card" style="text-align:center;padding:40px;color:var(--c-text3);">No bookings found. <a href="#" onclick="showSection(\'book\')" style="color:var(--c-accent)">Book a court →</a></div>'}
+      </div>
+    `;
+  }
+
+  function filterMyBookings(el, status) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.booking-item').forEach(c => {
+      c.style.display = (status === 'all' || c.dataset.status === status) ? '' : 'none';
+    });
+  }
+
+  async function cancelMyBooking(id) {
+    if (confirm('Cancel this booking?')) {
+      await ClubAPI.cancelBooking(id);
+      showToast('Booking cancelled.', 'error');
+      renderMyBookings();
+    }
+  }
+
+  // ---- MEMBERSHIP ----
+  async function renderMembership() {
+    document.getElementById('pageContent').innerHTML = `
+      <div class="card mb-24" style="background:linear-gradient(135deg,rgba(0,229,160,0.1),rgba(0,184,255,0.05));border-color:rgba(0,229,160,0.2)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+          <div>
+            <div style="font-size:11px;font-family:var(--font-mono);color:var(--c-accent);margin-bottom:4px;">CURRENT PLAN</div>
+            <div style="font-family:var(--font-display);font-size:36px;letter-spacing:1px;">PREMIUM</div>
+            <div style="color:var(--c-text2);font-size:13px;">Active since January 2024 · Renews Feb 1</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-family:var(--font-display);font-size:40px;color:var(--c-accent);">$79<span style="font-size:16px;color:var(--c-text3)">/mo</span></div>
+          </div>
+        </div>
+        <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:8px;">
+          ${['Unlimited bookings','Priority booking','2 Guest passes/mo','Equipment rental'].map(p =>
+            `<span style="background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.2);color:var(--c-accent);padding:4px 10px;border-radius:20px;font-size:12px;">✓ ${p}</span>`
+          ).join('')}
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;font-family:var(--font-display);font-size:20px;letter-spacing:0.5px;">Available Plans</div>
+      <div class="grid-2">
+        ${CONFIG.MEMBERSHIPS.map(m => `
+          <div class="card" style="border-color:${m.id==='premium'?'rgba(0,229,160,0.3)':'var(--c-border)'}">
+            <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+              <span style="font-family:var(--font-display);font-size:20px;color:${m.color};">${m.name.toUpperCase()}</span>
+              <span style="font-family:var(--font-display);font-size:24px;">$${m.price}<span style="font-size:12px;color:var(--c-text3)">/mo</span></span>
+            </div>
+            <ul style="list-style:none;display:flex;flex-direction:column;gap:4px;margin-bottom:14px;">
+              ${m.perks.map(p=>`<li style="font-size:12px;color:var(--c-text2);display:flex;gap:6px;align-items:center;"><span style="color:${m.color};font-size:10px;">✓</span>${p}</li>`).join('')}
+            </ul>
+            <button class="btn ${m.id==='premium'?'btn-ghost':'btn-green'}" style="width:100%;justify-content:center;" onclick="alert('Membership change submitted (demo)')">
+              ${m.id==='premium'?'Current Plan':'Switch to '+m.name}
+            </button>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // ---- PROFILE ----
+  function renderProfile() {
+    document.getElementById('pageContent').innerHTML = `
+      <div class="grid-2" style="align-items:start">
+        <div class="card">
+          <div style="text-align:center;margin-bottom:20px;">
+            <div class="user-avatar" style="width:72px;height:72px;font-size:24px;margin:0 auto 12px;">${ClubAuth.getUserInitials(user)}</div>
+            <div style="font-family:var(--font-display);font-size:24px;">${user.name||'Member'}</div>
+            <div style="font-size:13px;color:var(--c-text3)">${user.email}</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">First Name</label>
+            <input type="text" class="form-input" value="${(user.name||'').split(' ')[0]}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            <input type="text" class="form-input" value="${(user.name||'').split(' ').slice(1).join(' ')}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" value="${user.email||''}" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone</label>
+            <input type="tel" class="form-input" placeholder="555-0000" />
+          </div>
+          <button class="btn-primary" onclick="showToast('Profile updated!','success')">Save Profile</button>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="card">
+            <div class="card-title mb-16">Notifications</div>
+            ${['Email booking confirmations','SMS reminders (1hr before)','Event announcements','Membership renewal alerts'].map(n=>`
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--c-border);">
+                <span style="font-size:13px;color:var(--c-text2)">${n}</span>
+                <div onclick="this.classList.toggle('on')" style="width:36px;height:20px;background:var(--c-surface3);border-radius:10px;cursor:pointer;position:relative;transition:background 0.2s;" class="toggle-switch">
+                  <div style="position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--c-text3);transition:all 0.2s;"></div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="card">
+            <div class="card-title mb-16">Change Password</div>
+            <div class="form-group">
+              <label class="form-label">Current Password</label>
+              <input type="password" class="form-input" placeholder="••••••••" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">New Password</label>
+              <input type="password" class="form-input" placeholder="••••••••" />
+            </div>
+            <button class="btn btn-ghost" style="width:100%;justify-content:center;" onclick="showToast('Password updated!','success')">Update Password</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ---- HELPERS ----
+  function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+  function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('active');
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('active');
+  }
+
+  function showToast(msg, type) {
+    const t = document.createElement('div');
+    t.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:${type==='success'?'var(--c-accent)':'var(--c-danger)'};color:${type==='success'?'var(--c-black)':'white'};padding:12px 24px;border-radius:30px;font-weight:600;font-size:14px;z-index:9999;animation:slideUp 0.3s ease;box-shadow:0 4px 20px rgba(0,0,0,0.4)`;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+
+  // Toggle switch style
+  document.addEventListener('click', e => {
+    if (e.target.classList.contains('toggle-switch') || e.target.closest('.toggle-switch')) {
+      const sw = e.target.closest('.toggle-switch') || e.target;
+      const isOn = sw.classList.toggle('on');
+      sw.style.background = isOn ? 'var(--c-accent)' : 'var(--c-surface3)';
+      const dot = sw.querySelector('div');
+      if (dot) { dot.style.left = isOn ? '18px' : '2px'; dot.style.background = isOn ? 'var(--c-black)' : 'var(--c-text3)'; }
+    }
+  });
+
+  // Init
+  renderSection('home');
+</script>
+</body>
+</html>
