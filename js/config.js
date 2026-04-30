@@ -7,7 +7,7 @@ const CONFIG = {
   SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbxLLVZf6XaTsbHgdTgXVRxTNXfF-Ryux2QDjKr8IcWfqjfFKkpEO9RLAGrCfsB-oVzu/exec',
 
   // 🔧 OPTIONAL: For direct Sheets API access (requires OAuth setup)
-  SPREADSHEET_ID: '1Vdpt8f5yvsB3VpvrVXUyJs7EP7UTMg13mFZLMs_ceV0',
+  SPREADSHEET_ID: 'YOUR_SPREADSHEET_ID',
 
   // App settings
   CLUB_NAME: 'T Club',
