@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClubOS — Kiosk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <style>
+    body { overflow: hidden; }
+    .kiosk-wrap {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--c-black);
+    }
+    .kiosk-header {
+      background: var(--c-surface);
+      border-bottom: 1px solid var(--c-border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .kiosk-clock {
+      font-family: var(--font-display);
+      font-size: 28px;
+      letter-spacing: 2px;
+      color: var(--c-accent);
+    }
+    .kiosk-body {
+      flex: 1;
+      display: flex;
+      align-items: stretch;
+      padding: 32px;
+      gap: 24px;
+    }
+    .kiosk-main {
+      flex: 1;
+    }
+    .kiosk-sidebar {
+      width: 320px;
+    }
+    .kiosk-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 32px 20px;
+      background: var(--c-surface);
+      border: 2px solid var(--c-border);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .kiosk-btn:hover { transform: scale(1.02); border-color: var(--c-accent); background: rgba(0,229,160,0.05); }
+    .kiosk-btn .kb-icon { font-size: 48px; }
+    .kiosk-btn .kb-label { font-family: var(--font-display); font-size: 22px; letter-spacing: 1px; color: var(--c-text); }
+    .kiosk-btn .kb-desc { font-size: 13px; color: var(--c-text3); }
+
+    .recent-list { display: flex; flex-direction: column; gap: 8px; }
+    .checkin-item {
+      background: var(--c-surface);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      animation: slideUp 0.3s ease;
+    }
+
+    @media (max-width: 768px) {
+      .kiosk-body { flex-direction: column; padding: 16px; }
+      .kiosk-sidebar { width: 100%; }
+      .kiosk-btn { padding: 20px; }
+      .kiosk-btn .kb-icon { font-size: 32px; }
+    }
+  </style>
+</head>
+<body>
+<div class="kiosk-wrap">
+  <div class="kiosk-header">
+    <div>
+      <div style="font-family:var(--font-display);font-size:26px;letter-spacing:2px;">CLUB<span style="color:var(--c-accent)">OS</span> KIOSK</div>
+      <div style="font-size:12px;font-family:var(--font-mono);color:var(--c-text3);">Self-Service Station</div>
+    </div>
+    <div style="text-align:right">
+      <div class="kiosk-clock" id="kioskClock">--:--</div>
+      <div style="font-size:12px;font-family:var(--font-mono);color:var(--c-text3);" id="kioskDate">---</div>
+    </div>
+    <a href="../index.html" style="font-size:12px;font-family:var(--font-mono);color:var(--c-text3);text-decoration:none;border:1px solid var(--c-border);padding:8px 14px;border-radius:8px;">EXIT</a>
+  </div>
+
+  <div class="kiosk-body">
+    <div class="kiosk-main">
+      <div id="kioskView">
+        <!-- Main view -->
+        <div style="margin-bottom:24px;">
+          <div style="font-family:var(--font-display);font-size:32px;letter-spacing:1px;color:var(--c-text);">WELCOME</div>
+          <div style="font-size:14px;color:var(--c-text3);">Touch an option to get started</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;" id="kiosk-options">
+          <div class="kiosk-btn" onclick="kioskCheckin()">
+            <div class="kb-icon">✅</div>
+            <div class="kb-label">Check In</div>
+            <div class="kb-desc">Scan or enter your member ID</div>
+          </div>
+          <div class="kiosk-btn" onclick="kioskBook()">
+            <div class="kb-icon">📅</div>
+            <div class="kb-label">Book Court</div>
+            <div class="kb-desc">Reserve a court right now</div>
+          </div>
+          <div class="kiosk-btn" onclick="kioskLookup()">
+            <div class="kb-icon">🔍</div>
+            <div class="kb-label">Member Lookup</div>
+            <div class="kb-desc">Find account by email</div>
+          </div>
+          <div class="kiosk-btn" onclick="kioskDayPass()">
+            <div class="kb-icon">🎫</div>
+            <div class="kb-label">Day Pass</div>
+            <div class="kb-desc">Purchase a one-day access</div>
+          </div>
+          <div class="kiosk-btn" onclick="kioskEvents()">
+            <div class="kb-icon">🎯</div>
+            <div class="kb-label">Today's Events</div>
+            <div class="kb-desc">View open play & clinics</div>
+          </div>
+          <div class="kiosk-btn" onclick="kioskAdmin()">
+            <div class="kb-icon">🔒</div>
+            <div class="kb-label">Staff Access</div>
+            <div class="kb-desc">Admin override functions</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar: recent check-ins -->
+    <div class="kiosk-sidebar">
+      <div style="font-family:var(--font-display);font-size:18px;letter-spacing:0.5px;margin-bottom:12px;color:var(--c-text);">RECENT CHECK-INS</div>
+      <div class="recent-list" id="recentCheckins"></div>
+
+      <div style="margin-top:24px;font-family:var(--font-display);font-size:18px;letter-spacing:0.5px;margin-bottom:12px;color:var(--c-text);">TODAY'S EVENTS</div>
+      <div id="todayEventsKiosk"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Check-in Modal -->
+<div class="modal-overlay hidden" id="checkinModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('checkinModal')">✕</button>
+    <h2>Member Check-In</h2>
+    <div class="form-group">
+      <label class="form-label">Email or Member ID</label>
+      <input type="text" class="form-input" id="checkinQuery" style="font-size:20px;padding:16px;" placeholder="Enter email..." autofocus />
+    </div>
+    <button class="btn-primary" onclick="processCheckin()" style="font-size:18px;padding:18px;">
+      Check In ✓
+    </button>
+    <div id="checkinResult" style="margin-top:12px;"></div>
+  </div>
+</div>
+
+<!-- Book Modal -->
+<div class="modal-overlay hidden" id="kioskBookModal">
+  <div class="modal" style="max-width:500px">
+    <button class="modal-close" onclick="closeModal('kioskBookModal')">✕</button>
+    <h2>Quick Court Booking</h2>
+    <div class="form-group">
+      <label class="form-label">Member Email</label>
+      <input type="email" class="form-input" id="bookEmail" placeholder="your@email.com" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Court</label>
+      <select class="form-input" id="bookCourt" style="font-size:16px;padding:14px;">
+        ${CONFIG ? CONFIG.COURTS.map(c=>`<option value="${c.id}">${c.name}</option>`).join('') : ''}
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Start Time</label>
+        <input type="time" class="form-input" id="bookStart" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">End Time</label>
+        <input type="time" class="form-input" id="bookEnd" />
+      </div>
+    </div>
+    <button class="btn-primary" onclick="processKioskBooking()" style="font-size:16px;padding:16px;">
+      Confirm Booking
+    </button>
+  </div>
+</div>
+
+<!-- Day Pass Modal -->
+<div class="modal-overlay hidden" id="dayPassModal">
+  <div class="modal" style="max-width:420px;text-align:center;">
+    <button class="modal-close" onclick="closeModal('dayPassModal')">✕</button>
+    <h2>Day Pass</h2>
+    <div style="font-size:60px;margin:20px 0;">🎫</div>
+    <div style="font-family:var(--font-display);font-size:48px;color:var(--c-accent);margin-bottom:8px;">$20</div>
+    <p style="color:var(--c-text2);font-size:14px;margin-bottom:20px;">Full day access including court time and open play sessions.</p>
+    <div class="form-group">
+      <label class="form-label">Name</label>
+      <input type="text" class="form-input" placeholder="Your full name" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input type="email" class="form-input" placeholder="for receipt" />
+    </div>
+    <button class="btn-primary" onclick="processDayPass()">Purchase Day Pass</button>
+  </div>
+</div>
+
+<!-- Events Kiosk Modal -->
+<div class="modal-overlay hidden" id="eventsKioskModal">
+  <div class="modal" style="max-width:600px">
+    <button class="modal-close" onclick="closeModal('eventsKioskModal')">✕</button>
+    <h2>Today's Events</h2>
+    <div id="eventsKioskContent"></div>
+  </div>
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  // Clock
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('kioskClock').textContent = now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    document.getElementById('kioskDate').textContent = now.toLocaleDateString([], {weekday:'long',month:'long',day:'numeric'});
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // Load today's events
+  async function loadSidebar() {
+    const [ciRes, evRes] = await Promise.all([ClubAPI.getCheckins(), ClubAPI.getEvents()]);
+    const checkins = (ciRes.data||[]).slice(-5).reverse();
+    const events = evRes.data||[];
+    const today = new Date().toISOString().split('T')[0];
+
+    document.getElementById('recentCheckins').innerHTML = checkins.length ?
+      checkins.map(c => `
+        <div class="checkin-item">
+          <div class="user-avatar" style="width:32px;height:32px;font-size:12px;">✓</div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--c-text)">Member ${c.memberId}</div>
+            <div style="font-size:11px;font-family:var(--font-mono);color:var(--c-text3)">${c.time} · ${c.type}</div>
+          </div>
+        </div>
+      `).join('') : '<div style="color:var(--c-text3);font-size:13px;">No check-ins yet today</div>';
+
+    document.getElementById('todayEventsKiosk').innerHTML = events
+      .filter(e => e.date === today)
+      .map(e => `
+        <div style="background:var(--c-surface);border:1px solid var(--c-border);border-radius:8px;padding:10px;margin-bottom:8px;">
+          <div style="font-weight:600;font-size:13px;color:var(--c-text)">${e.title}</div>
+          <div style="font-size:11px;font-family:var(--font-mono);color:var(--c-text3)">${e.startTime} · ${e.enrolled}/${e.capacity} spots</div>
+          <span class="badge ${e.status==='full'?'badge-red':'badge-green'}" style="margin-top:4px;">${e.status}</span>
+        </div>
+      `).join('') || '<div style="color:var(--c-text3);font-size:13px;">No events today</div>';
+  }
+
+  // Actions
+  function kioskCheckin() { openModal('checkinModal'); document.getElementById('checkinQuery').focus(); }
+  function kioskBook() {
+    const now = new Date();
+    document.getElementById('bookStart').value = `${String(now.getHours()).padStart(2,'0')}:00`;
+    document.getElementById('bookEnd').value = `${String(now.getHours()+1).padStart(2,'0')}:00`;
+    openModal('kioskBookModal');
+  }
+
+  async function kioskLookup() {
+    const email = prompt('Enter member email:');
+    if (!email) return;
+    const res = await ClubAPI.lookupMember(email);
+    if (res.data) {
+      const m = res.data;
+      alert(`Found: ${m.firstName} ${m.lastName}\nMembership: ${m.membership}\nStatus: ${m.status}\nBookings: ${m.bookings}`);
+    } else {
+      alert('No member found with that email.');
+    }
+  }
+
+  function kioskDayPass() { openModal('dayPassModal'); }
+  async function kioskAdmin() {
+    const code = prompt('Enter staff code:');
+    if (code === CONFIG.ADMIN_CODE) window.location.href = 'admin-panel.html';
+    else if (code) alert('Invalid staff code.');
+  }
+
+  async function kioskEvents() {
+    const res = await ClubAPI.getEvents();
+    const events = res.data || [];
+    const today = new Date().toISOString().split('T')[0];
+    const todayEvents = events.filter(e => e.date === today);
+    document.getElementById('eventsKioskContent').innerHTML = todayEvents.map(e => `
+      <div style="border:1px solid var(--c-border);border-radius:10px;padding:16px;margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div style="font-family:var(--font-display);font-size:20px;">${e.title}</div>
+            ${e.instructor?`<div style="font-size:12px;color:var(--c-accent2);">👨‍🏫 ${e.instructor}</div>`:''}
+          </div>
+          <span class="badge ${e.status==='full'?'badge-red':'badge-green'}">${e.status}</span>
+        </div>
+        <div style="display:flex;gap:16px;margin-top:8px;font-size:13px;color:var(--c-text2);">
+          <span>🕐 ${e.startTime}–${e.endTime}</span>
+          <span>👥 ${e.enrolled}/${e.capacity}</span>
+          <span>💵 $${e.price}</span>
+        </div>
+        ${e.status!=='full' ? `<button class="btn btn-green btn-sm" style="margin-top:10px;" onclick="alert('Walk-in registered! (demo)')">Walk-in Register</button>` : ''}
+      </div>
+    `).join('') || '<p style="color:var(--c-text3)">No events today</p>';
+    openModal('eventsKioskModal');
+  }
+
+  async function processCheckin() {
+    const query = document.getElementById('checkinQuery').value.trim();
+    if (!query) return;
+    const res = await ClubAPI.lookupMember(query);
+    const result = document.getElementById('checkinResult');
+    if (res.data) {
+      const m = res.data;
+      await ClubAPI.checkin(m.id, 'kiosk');
+      result.innerHTML = `<div style="background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.3);border-radius:10px;padding:16px;text-align:center;">
+        <div style="font-size:48px;margin-bottom:8px;">✅</div>
+        <div style="font-family:var(--font-display);font-size:24px;color:var(--c-accent);">${m.firstName} ${m.lastName}</div>
+        <div style="font-size:13px;color:var(--c-text2);">${m.membership} member · Checked in at ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
+      </div>`;
+      loadSidebar();
+      setTimeout(() => { closeModal('checkinModal'); document.getElementById('checkinResult').innerHTML = ''; document.getElementById('checkinQuery').value = ''; }, 3000);
+    } else {
+      result.innerHTML = `<div style="background:rgba(255,71,87,0.1);border:1px solid rgba(255,71,87,0.2);border-radius:8px;padding:12px;text-align:center;color:var(--c-danger);">Member not found. Check email or ID.</div>`;
+    }
+  }
+
+  async function processKioskBooking() {
+    const data = {
+      memberId: 'm1', // in real app, lookup by email
+      courtId: document.getElementById('bookCourt').value,
+      date: new Date().toISOString().split('T')[0],
+      startTime: document.getElementById('bookStart').value,
+      endTime: document.getElementById('bookEnd').value,
+      type: 'court', price: 15
+    };
+    await ClubAPI.createBooking(data);
+    closeModal('kioskBookModal');
+    showKioskToast('Court booked successfully! 🎾');
+  }
+
+  function processDayPass() {
+    closeModal('dayPassModal');
+    showKioskToast('Day pass activated! Welcome! 🎫');
+  }
+
+  function showKioskToast(msg) {
+    const t = document.createElement('div');
+    t.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--c-accent);color:var(--c-black);padding:24px 48px;border-radius:20px;font-family:var(--font-display);font-size:28px;letter-spacing:1px;z-index:9999;text-align:center;box-shadow:0 8px 40px rgba(0,229,160,0.3)';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+
+  function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+  function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+  // Init
+  loadSidebar();
+  setInterval(loadSidebar, 30000); // refresh every 30s
+</script>
+</body>
+</html>
