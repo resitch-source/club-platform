@@ -14,7 +14,7 @@ const CONFIG = {
   CLUB_LOGO: '⬡',
   CURRENCY: '₱',
   TIMEZONE: 'Philippine Time (PHT)',
-  DEMO_MODE: false, // Set to false when connected to real Google Sheets
+  DEMO_MODE: true, // Set to false when connected to real Google Sheets
 
   // Court/facility configuration
   COURTS: [
