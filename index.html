@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClubOS — Sports Club Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/login.css" />
+</head>
+<body class="login-page">
+
+  <div class="login-bg">
+    <div class="court-lines"></div>
+    <div class="glow-orb orb1"></div>
+    <div class="glow-orb orb2"></div>
+  </div>
+
+  <div class="login-wrapper">
+    <div class="login-card">
+      <div class="brand">
+        <div class="brand-mark">⬡</div>
+        <h1 class="brand-name">CLUB<span>OS</span></h1>
+        <p class="brand-tagline">Sports Club Management Platform</p>
+      </div>
+
+      <div class="portal-selector">
+        <button class="portal-btn active" data-portal="member" onclick="setPortal('member')">
+          <span class="portal-icon">🏓</span>
+          <span class="portal-label">Member Portal</span>
+        </button>
+        <button class="portal-btn" data-portal="admin" onclick="setPortal('admin')">
+          <span class="portal-icon">⚙️</span>
+          <span class="portal-label">Admin Panel</span>
+        </button>
+        <button class="portal-btn" data-portal="kiosk" onclick="setPortal('kiosk')">
+          <span class="portal-icon">📟</span>
+          <span class="portal-label">Kiosk</span>
+        </button>
+      </div>
+
+      <form class="login-form" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="loginEmail" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" id="loginPassword" placeholder="••••••••" required />
+        </div>
+
+        <div id="adminCodeGroup" class="form-group hidden">
+          <label class="form-label">Staff Code</label>
+          <input type="text" class="form-input" id="adminCode" placeholder="Enter staff access code" />
+        </div>
+
+        <button type="submit" class="btn-primary" id="loginBtn">
+          <span id="loginBtnText">Enter Member Portal</span>
+          <span class="btn-arrow">→</span>
+        </button>
+
+        <div class="login-links">
+          <a href="#" onclick="showRegister()">New member? Register</a>
+          <a href="#" onclick="showForgot()">Forgot password?</a>
+        </div>
+      </form>
+
+      <div id="statusMsg" class="status-msg hidden"></div>
+    </div>
+
+    <div class="login-info">
+      <div class="info-card" id="infoCard">
+        <h3>Welcome Back</h3>
+        <p>Access your bookings, manage memberships, and stay connected with your club community.</p>
+        <ul class="feature-list">
+          <li>📅 Book courts & events</li>
+          <li>👥 Manage your membership</li>
+          <li>🏆 Track activity history</li>
+          <li>📱 Works on any device</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Register Modal -->
+  <div class="modal-overlay hidden" id="registerModal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal('registerModal')">✕</button>
+      <h2>Create Account</h2>
+      <form onsubmit="handleRegister(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">First Name</label>
+            <input type="text" class="form-input" id="regFirst" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            <input type="text" class="form-input" id="regLast" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" id="regEmail" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input type="tel" class="form-input" id="regPhone" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" class="form-input" id="regPassword" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Membership Type</label>
+          <select class="form-input" id="regMembership">
+            <option value="guest">Guest (Free)</option>
+            <option value="basic">Basic Member</option>
+            <option value="premium">Premium Member</option>
+          </select>
+        </div>
+        <button type="submit" class="btn-primary">Create Account</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let currentPortal = 'member';
+
+    function setPortal(portal) {
+      currentPortal = portal;
+      document.querySelectorAll('.portal-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector(`[data-portal="${portal}"]`).classList.add('active');
+
+      const btnText = document.getElementById('loginBtnText');
+      const adminGroup = document.getElementById('adminCodeGroup');
+      const infoCard = document.getElementById('infoCard');
+
+      const info = {
+        member: {
+          btn: 'Enter Member Portal',
+          title: 'Welcome Back',
+          desc: 'Access your bookings, manage memberships, and stay connected with your club community.',
+          features: ['📅 Book courts & events','👥 Manage your membership','🏆 Track activity history','📱 Works on any device']
+        },
+        admin: {
+          btn: 'Enter Admin Panel',
+          title: 'Admin Panel',
+          desc: 'Manage your facility, members, events, and schedulers from one powerful dashboard.',
+          features: ['👥 Manage all members','📋 Create & manage events','📊 View schedulers','💳 Membership management']
+        },
+        kiosk: {
+          btn: 'Start Kiosk Mode',
+          title: 'Kiosk Station',
+          desc: 'Self-service check-in and quick reservations for your facility.',
+          features: ['✅ Quick check-in','📅 Walk-in bookings','🔍 Member lookup','🎫 Day passes']
+        }
+      };
+
+      const d = info[portal];
+      btnText.textContent = d.btn;
+      adminGroup.classList.toggle('hidden', portal !== 'admin');
+      infoCard.innerHTML = `<h3>${d.title}</h3><p>${d.desc}</p><ul class="feature-list">${d.features.map(f=>`<li>${f}</li>`).join('')}</ul>`;
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      const btn = document.getElementById('loginBtn');
+
+      btn.classList.add('loading');
+      btn.disabled = true;
+
+      ClubAPI.login(email, password, currentPortal).then(result => {
+        if (result.success) {
+          const routes = {
+            member: 'pages/member-portal.html',
+            admin: 'pages/admin-panel.html',
+            kiosk: 'pages/kiosk.html'
+          };
+          window.location.href = routes[currentPortal];
+        } else {
+          showStatus(result.message || 'Login failed. Check your credentials.', 'error');
+          btn.classList.remove('loading');
+          btn.disabled = false;
+        }
+      }).catch(() => {
+        // Demo mode - go directly
+        sessionStorage.setItem('clubos_user', JSON.stringify({email, portal: currentPortal, name: 'Demo User', role: currentPortal === 'admin' ? 'admin' : 'member'}));
+        const routes = { member: 'pages/member-portal.html', admin: 'pages/admin-panel.html', kiosk: 'pages/kiosk.html' };
+        window.location.href = routes[currentPortal];
+      });
+    }
+
+    function handleRegister(e) {
+      e.preventDefault();
+      const data = {
+        firstName: document.getElementById('regFirst').value,
+        lastName: document.getElementById('regLast').value,
+        email: document.getElementById('regEmail').value,
+        phone: document.getElementById('regPhone').value,
+        password: document.getElementById('regPassword').value,
+        membership: document.getElementById('regMembership').value
+      };
+      ClubAPI.register(data).then(r => {
+        showStatus(r.success ? 'Account created! You can now log in.' : r.message, r.success ? 'success' : 'error');
+        if (r.success) closeModal('registerModal');
+      }).catch(() => {
+        showStatus('Registration saved (demo mode). Please log in.', 'success');
+        closeModal('registerModal');
+      });
+    }
+
+    function showStatus(msg, type) {
+      const el = document.getElementById('statusMsg');
+      el.textContent = msg;
+      el.className = `status-msg ${type}`;
+    }
+
+    function showRegister() { document.getElementById('registerModal').classList.remove('hidden'); }
+    function showForgot() { showStatus('Password reset link sent to your email (demo).', 'success'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+  </script>
+</body>
+</html>
